@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your IP Info</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #eef2f3, #ffffff);
+      margin: 0;
+      padding: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .dark-mode {
+      background: #1e1e1e;
+      color: #eee;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 60px auto;
+      padding: 30px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .dark-mode .container {
+      background: #2b2b2b;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .info {
+      font-size: 16px;
+      margin: 12px 0;
+    }
+
+    .value {
+      font-weight: 600;
+      margin-left: 5px;
+    }
+
+    .copy-btn {
+      margin-left: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      vertical-align: middle;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      transition: transform 0.2s;
+    }
+
+    .copy-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .copy-btn svg {
+      height: 18px;
+      width: 18px;
+      fill: #007bff;
+    }
+
+    .map {
+      margin-top: 25px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+      margin-left: 10px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background-color: #333;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      font-size: 14px;
+      z-index: 1000;
+    }
+
+    #toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="toggle-switch">
+      <label for="theme-toggle">Dark Mode</label>
+      <label class="switch">
+        <input type="checkbox" id="theme-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <h1>Your IP Information</h1>
+
+    <div class="info">
+      <strong>IPv4:</strong>
+      <span class="value" id="ipv4">Loading...</span>
+      <button class="copy-btn" onclick="copyText('ipv4')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v16h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 18H8V7h11v16z"/></svg>
+      </button>
+    </div>
+    <div class="info">
+      <strong>IPv6:</strong>
+      <span class="value" id="ipv6">Loading...</span>
+      <button class="copy-btn" onclick="copyText('ipv6')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v16h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 18H8V7h11v16z"/></svg>
+      </button>
+    </div>
+    <div class="info">
+      <strong>Country:</strong>
+      <span class="value" id="country">Loading...</span>
+      <img id="flag" src="" alt="Flag" style="height: 20px; margin-left: 10px; display: none;" />
+    </div>
+    <div class="info"><strong>City:</strong><span class="value" id="city">Loading...</span></div>
+    <div class="info"><strong>Region:</strong><span class="value" id="region">Loading...</span></div>
+    <div class="info"><strong>Timezone:</strong><span class="value" id="timezone">Loading...</span></div>
+    <div class="info"><strong>ISP:</strong><span class="value" id="org">Loading...</span></div>
+
+    <div class="map">
+      <iframe id="map" width="100%" height="300" frameborder="0" style="border:0" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <div id="toast">Copied!</div>
+
+  <script>
+    // IPv4
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('ipv4').textContent = data.ip;
+      });
+
+    // IPv6
+    fetch('https://api64.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        const isIPv6 = data.ip.includes(":");
+        document.getElementById('ipv6').textContent = isIPv6 ? data.ip : "Not Available";
+      });
+
+    // Geo & flag
+    fetch('https://ipapi.co/json/')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('country').textContent = data.country_name || 'Unavailable';
+        document.getElementById('city').textContent = data.city || 'Unavailable';
+        document.getElementById('region').textContent = data.region || 'Unavailable';
+        document.getElementById('timezone').textContent = data.timezone || 'Unavailable';
+        document.getElementById('org').textContent = data.org || 'Unavailable';
+
+        if (data.country_code) {
+          const code = data.country_code.toLowerCase();
+          const flag = document.getElementById('flag');
+          flag.src = `https://flagcdn.com/w40/${code}.png`;
+          flag.style.display = 'inline-block';
+        }
+
+        if (data.latitude && data.longitude) {
+          updateMap(data.latitude, data.longitude, data.city, data.country_name);
+        }
+      });
+
+    function updateMap(lat, lon, city, country) {
+      const q = encodeURIComponent(`${city}, ${country}`);
+      document.getElementById('map').src = `https://maps.google.com/maps?q=${q}&z=12&output=embed`;
+    }
+
+    function copyText(id) {
+      const text = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1500);
+      });
+    }
+
+    document.getElementById('theme-toggle').addEventListener('change', function () {
+      document.body.classList.toggle('dark-mode');
+    });
+  </script>
+</body>
+</html>
