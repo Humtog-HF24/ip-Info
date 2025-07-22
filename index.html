@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="manifest" href="manifest.json">
   <title>Your IP Info</title>
   <style>
     body {
@@ -246,6 +247,11 @@
     document.getElementById('theme-toggle').addEventListener('change', function () {
       document.body.classList.toggle('dark-mode');
     });
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(() => {
+      console.log('Service Worker Registered');
+    });
+  }
   </script>
 </body>
 </html>
